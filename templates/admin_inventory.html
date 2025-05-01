@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management | SmartInventory</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #5c6bc0; /* Blue-ish Purple */
+            --secondary-color: #424242; /* Dark Gray */
+            --accent-color: #ff7043; /* Coral */
+            --light-color: #f5f5f5; /* Light Gray */
+            --dark-color: #212121; /* Dark Charcoal */
+            --success-color: #66bb6a; /* Green */
+            --highlight-color: #ffeb3b; /* Yellow */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif; /* New Font */
+        }
+        
+        body {
+            background-color: #fafafa; /* Light Gray */
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        /* Navbar Styles */
+        .navbar {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 12px;
+            color: var(--primary-color);
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 2.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a.active {
+            color: var(--primary-color);
+        }
+        
+        .nav-links a:hover {
+            color: var(--highlight-color);
+        }
+        
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        /* Main Content */
+        .container {
+            max-width: 1300px;
+            margin: 3rem auto;
+            padding: 0 2.5rem;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            animation: fadeInDown 0.5s ease;
+        }
+        
+        .page-header h1 {
+            font-size: 2.4rem;
+            color: var(--secondary-color);
+        }
+        
+        .inventory-actions {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn i {
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #3f4a97;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #4caf50;
+        }
+        
+        .search-bar {
+            flex-grow: 1;
+            position: relative;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 0.9rem 1.2rem 0.9rem 2.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1.1rem;
+        }
+        
+        .search-bar i {
+            position: absolute;
+            left: 1.3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        /* Inventory Table */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        .inventory-table th,
+        .inventory-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .inventory-table th {
+            background-color: var(--light-color);
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        .inventory-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .item-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-right: 12px;
+        }
+        
+        .item-name {
+            display: flex;
+            align-items: center;
+        }
+        
+        .stock-status {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .status-in-stock {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-low-stock {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-out-of-stock {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin: 0 6px;
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            color: #3f4a97;
+        }
+        
+        .action-btn.delete {
+            color: var(--accent-color);
+        }
+        
+        .action-btn.delete:hover {
+            color: #c0392b;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2.5rem;
+        }
+        
+        .pagination-btn {
+            width: 45px;
+            height: 45px;
+            border: 1px solid #ddd;
+            background-color: white;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination-btn:hover:not(.active) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: white;
+            width: 90%;
+            max-width: 650px;
+            border-radius: 10px;
+            box-shadow: 0 6px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.6rem;
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.7rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .close-btn:hover {
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.9rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .modal-footer {
+            padding: 1rem 2rem;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1.5rem;
+        }
+        
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .file-upload i {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-upload p {
+            margin: 0;
+            color: #666;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .inventory-actions {
+                flex-wrap: wrap;
+            }
+        
+            .search-bar {
+                order: 3;
+                width: 100%;
+                margin-top: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+        
+            .nav-links {
+                position: fixed;
+                top: 70px;
+                left: -100%;
+                width: 100%;
+                height: calc(100vh - 70px);
+                background-color: var(--secondary-color);
+                flex-direction: column;
+                align-items: center;
+                padding: 2.5rem 0;
+                transition: left 0.3s ease;
+            }
+        
+            .nav-links.active {
+                left: 0;
+            }
+        
+            .nav-links li {
+                margin: 1.2rem 0;
+            }
+        
+            .inventory-table {
+                display: block;
+                overflow-x: auto;
+            }
+        
+            .form-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        
+            .page-header h1 {
+                margin-bottom: 1rem;
+            }
+        
+            .inventory-actions {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+        
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        
+            .modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-box-open"></i>
+            <span>SmartInventory</span>
+        </div>
+        <div class="hamburger">
+            <i class="fas fa-bars"></i>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/admin_dashboard" ><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/admin_inventory"  class="active"><i class="fas fa-box-open"></i> Inventory</a></li>
+            <li><a href="/"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-box-open"></i> Inventory Management</h1>
+            <div>Total Items: <strong>{{total_items}}</strong></div>
+        </div>
+        
+        <div class="inventory-actions">
+            <button class="btn btn-success" id="addItemBtn">
+                <i class="fas fa-plus"></i> Add Item
+            </button>
+            <button class="btn">
+                <i class="fas fa-file-export"></i> Export
+            </button>
+        </div>
+        
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Price/Item</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in result %}
+                <tr>
+                    <td style="display: flex;flex-direction: column;justify-content: center;align-items: center;">
+                            <img src="data:image/jpg;base64,{{row[-1]}}" class="item-image">
+                            {{row[1]}}
+                    </td>
+                    <td>{{row[2]}}</td>
+                    <td>{{row[3]}}</td>
+                    <td>{{row[4]}}</td>
+                        {% set stock = row[3]|int %}
+
+                    {% if stock <= 0 %}
+                        <td><span class="stock-status status-out-of-stock">{{ row[5] }}</span></td>
+                    {% elif stock < 100 %}
+                        <td><span class="stock-status status-low-stock">{{ row[5] }}</span></td>
+                    {% else %}
+                        <td><span class="stock-status status-in-stock">{{ row[5] }}</span></td>
+                    {% endif %}
+                    <td>{{row[6]}}</td>
+                    <td>
+                        <a href="/delete_item/{{row[0]}}" class="action-btn delete" title="Delete"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div class="modal" id="addItemModal" style="overflow: scroll;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus-circle"></i> Add New Item</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm" action="/add_item" method="post" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="itemCategory">Category</label>
+                            <select id="itemCategory" name="category" class="form-control" required>
+                                <option value="">Select Category</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Furniture">Furniture</option>
+                                <option value="Office Supplies">Office Supplies</option>
+                                <option value="Tools">Tools</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemName">Item Name</label>
+                            <select id="itemName" name="item" class="form-control" required disabled>
+                                <option value="">Select Category First</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="itemQuantity">Quantity</label>
+                            <input type="number" id="itemQuantity" name="quantity" class="form-control" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="itemLocation">Location</label>
+                        <input type="text" id="itemLocation" name="location" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="itemStatus">Status</label>
+                        <select id="itemStatus" class="form-control" name="status">
+                            <option value="in stock">In Stock</option>
+                            <option value="low stock">Low Stock</option>
+                            <option value="out of stock">Out of Stock</option>
+                        </select>
+                    </div>   
+                    
+                    <div class="form-group">
+                        <label for="itemPrice">Price / Item</label>
+                        <input type="text" id="itemPrice" name="Price" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Item Image</label>
+                        <input type="file" id="itemImage" name="image" accept="image/*">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" id="submitAddItem">Add Item</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // Dummy data for items by category
+        const itemsByCategory = {
+            "Electronics": [
+                "Dell XPS 15 Laptop",
+                "LG 27\" 4K Monitor",
+                "HP LaserJet Printer",
+                "Apple MacBook Pro",
+                "Samsung 55\" Smart TV",
+                "Bose QuietComfort Headphones"
+            ],
+            "Furniture": [
+                "Ergonomic Office Chair",
+                "Standing Desk",
+                "Conference Table",
+                "Filing Cabinet",
+                "Bookshelf",
+                "Visitor Chair"
+            ],
+            "Office Supplies": [
+                "Stapler",
+                "Paper Clips (Box of 100)",
+                "Ballpoint Pens (Pack of 12)",
+                "Notebooks (Pack of 5)",
+                "Sticky Notes (Pack of 10)",
+                "Whiteboard Markers (Set of 4)"
+            ],
+            "Tools": [
+                "Cordless Drill",
+                "Screwdriver Set",
+                "Adjustable Wrench",
+                "Measuring Tape",
+                "Utility Knife",
+                "Hammer"
+            ],
+            "Other": [
+                "First Aid Kit",
+                "Water Cooler",
+                "Coffee Machine",
+                "Air Purifier",
+                "Security Camera",
+                "Fire Extinguisher"
+            ]
+        };
+
+        // Mobile Menu Toggle
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+        
+        // Modal functionality
+        const addItemBtn = document.getElementById('addItemBtn');
+        const addItemModal = document.getElementById('addItemModal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const itemCategorySelect = document.getElementById('itemCategory');
+        const itemNameSelect = document.getElementById('itemName');
+        
+        // Open modal
+        addItemBtn.addEventListener('click', () => {
+            addItemModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+        });
+        
+        // Close modal
+        function closeModal() {
+            addItemModal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Re-enable scrolling
+        }
+        
+        closeModalBtn.addEventListener('click', closeModal);
+
+        // Close modal when clicking outside
+        addItemModal.addEventListener('click', (e) => {
+            if (e.target === addItemModal) {
+                closeModal();
+            }
+        });
+        
+        
+        // Category change handler
+        itemCategorySelect.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            const itemNameSelect = document.getElementById('itemName');
+            
+            // Clear previous options
+            itemNameSelect.innerHTML = '';
+            
+            if (selectedCategory) {
+                // Enable the select
+                itemNameSelect.disabled = false;
+                
+                // Add items for the selected category
+                itemsByCategory[selectedCategory].forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    itemNameSelect.appendChild(option);
+                });
+                
+                // Generate SKU based on category and first item
+                generateSKU(selectedCategory, itemsByCategory[selectedCategory][0]);
+            } else {
+                // Disable the select if no category is selected
+                itemNameSelect.disabled = true;
+                itemNameSelect.innerHTML = '<option value="">Select Category First</option>';
+            }
+        });
+
+        // Export to PDF functionality
+document.querySelector('.btn:nth-child(2)').addEventListener('click', exportToPDF);
+
+function exportToPDF() {
+    // Initialize jsPDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'pt', 'a4');
+    
+    // Get the table element
+    const table = document.querySelector('.inventory-table');
+    const title = "Inventory Report";
+    const date = new Date().toLocaleDateString();
+    
+    // Use html2canvas to capture the table as an image
+    html2canvas(table).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = doc.internal.pageSize.getWidth() - 40;
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+        
+        // Add title and date
+        doc.setFontSize(18);
+        doc.text(title, 40, 40);
+        doc.setFontSize(12);
+        doc.text(`Generated on: ${date}`, 40, 60);
+        
+        // Add the table image
+        doc.addImage(imgData, 'PNG', 20, 80, imgWidth, imgHeight);
+        
+        // Save the PDF
+        doc.save('Inventory_Report.pdf');
+    });
+}
+    </script>
+</body>
+</html>
